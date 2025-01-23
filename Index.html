@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captura de Câmera</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        video {
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #output {
+            margin-top: 20px;
+            width: 80%;
+            max-width: 300px;
+            margin: 0 auto;
+            display: none;
+        }
+
+        #output img {
+            width: 100%;
+            border: 1px solid #ccc;
+        }
+
+        #instructions {
+            font-size: 18px;
+            color: #555;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Captura de Câmera</h1>
+    <p id="instructions">Clique no botão abaixo para capturar a imagem da câmera.</p>
+    <video id="video" width="320" height="240" autoplay></video><br>
+    <button id="captureBtn">Capturar Imagem</button>
+    <div id="output">
+        <h3>Imagem Capturada</h3>
+        <img id="capturedImage" src="" alt="Imagem Capturada">
+    </div>
+
+    <script>
+        // Acessa a câmera do dispositivo
+        let videoElement = document.getElementById('video');
+        let captureButton = document.getElementById('captureBtn');
+        let outputDiv = document.getElementById('output');
+        let capturedImage = document.getElementById('capturedImage');
+
+        // Função para acessar a câmera e exibir no elemento <video>
+        async function initCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoElement.srcObject = stream;
+            } catch (err) {
+                console.log("Erro ao acessar a câmera: ", err);
+            }
+        }
+
+        // Função para capturar a imagem da câmera
+        function captureImage() {
+            let canvas = document.createElement('canvas');
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            let context = canvas.getContext('2d');
+            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+            let dataUrl = canvas.toDataURL('image/png');
+            capturedImage.src = dataUrl;
+            outputDiv.style.display = 'block';
+
+            // Envia a imagem para o servidor PHP (envio para o banco de dados ou salvar no dispositivo)
+            uploadImage(dataUrl);
+        }
+
+        // Função para enviar a imagem para o servidor PHP
+        function uploadImage(imageData) {
+            let formData = new FormData();
+            formData.append('image', imageData);
+
+            fetch('upload.php', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.text())
+              .then(data => {
+                  alert(data);  // Exibe a mensagem do PHP
+              }).catch(err => {
+                  console.error('Erro ao enviar a imagem:', err);
+              });
+        }
+
+        // Inicia a câmera ao carregar a página
+        window.onload = initCamera;
+
+        // Captura a imagem quando o botão é pressionado
+        captureButton.addEventListener('click', captureImage);
+    </script>
+</body>
+  </html>
